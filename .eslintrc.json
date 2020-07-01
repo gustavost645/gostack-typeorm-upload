@@ -25,6 +25,7 @@
   ],
   "rules": {
     "no-underscore-dangle": "off",
+    "endOfLine":"auto",
     "prettier/prettier": "error",
     "class-methods-use-this": "off",
     "@typescript-eslint/camelcase": "off",
