@@ -1,5 +1,5 @@
 import { getCustomRepository, getRepository } from 'typeorm';
-//import AppError from '../errors/AppError';
+import AppError from '../errors/AppError';
 import TransactionRepository from '../repositories/TransactionsRepository';
 
 import Transaction from '../models/Transaction';
@@ -15,30 +15,37 @@ interface RequestDTO {
 class CreateTransactionService {
   public async execute({ title, value, type, category }: RequestDTO): Promise<Transaction> {
 
-    const transactionRepository = getCustomRepository(TransactionRepository);
-
+    const transactionsRepository = getCustomRepository(TransactionRepository);
     const categoryRepository = getRepository(Category);
 
-    let transectionCategory = await categoryRepository.findOne({
-      where: { title: category },
-    });
+    const { total } = await transactionsRepository.getBalance();
 
-    if (!transectionCategory) {
-      transectionCategory = categoryRepository.create({
-        title:category,
-      });
-
-      await categoryRepository.save(transectionCategory);
+    if(type == 'outcome' && total < value){
+      throw new AppError('You do not enough balance');
     }
 
-    const transaction = transactionRepository.create({
+    let transactionCategory = await categoryRepository.findOne({
+      where: {
+        title: category,
+      },
+    });
+
+    if (!transactionCategory) {
+      transactionCategory = categoryRepository.create({
+        title: category,
+      });
+
+      await categoryRepository.save(transactionCategory);
+    }
+
+    const transaction = transactionsRepository.create({
       title,
       value,
       type,
-      category: transectionCategory,
+      category: transactionCategory,
     });
 
-    await transactionRepository.save(transaction);
+    await transactionsRepository.save(transaction);
 
     return transaction;
   }
